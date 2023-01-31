@@ -19,12 +19,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.1)
 
 # include additional cmake
-include(utils/cmake/JSONParser.cmake)
-include(utils/cmake/util.cmake)
-include(utils/cmake/colours.cmake)
+set( CORE_PATH "libraries/codal" )
+include(${CORE_PATH}/utils/cmake/JSONParser.cmake)
+include(${CORE_PATH}/utils/cmake/util.cmake)
+include(${CORE_PATH}/utils/cmake/colours.cmake)
 
 if (NOT "${BUILD_TOOL}" STRGREATER "")
     set(BUILD_TOOL "CODAL")
@@ -95,7 +96,7 @@ endif()
 ####################
 
 SET(TOOLCHAIN ${device.toolchain})
-SET(TOOLCHAIN_FOLDER "${CMAKE_CURRENT_LIST_DIR}/utils/cmake/toolchains/${device.toolchain}")
+SET(TOOLCHAIN_FOLDER "${CMAKE_CURRENT_LIST_DIR}/${CORE_PATH}/utils/cmake/toolchains/${device.toolchain}")
 
 # include toolchain file
 set(CMAKE_TOOLCHAIN_FILE "${TOOLCHAIN_FOLDER}/toolchain.cmake" CACHE PATH "toolchain file")
@@ -106,7 +107,7 @@ enable_language(ASM)
 
 # include compiler flags overrides
 include(${TOOLCHAIN_FOLDER}/compiler-flags.cmake)
-set(PLATFORM_INCLUDES_PATH "${PROJECT_SOURCE_DIR}/utils/cmake/toolchains/${device.toolchain}")
+set(PLATFORM_INCLUDES_PATH "${PROJECT_SOURCE_DIR}/${CORE_PATH}/utils/cmake/toolchains/${device.toolchain}")
 
 file(MAKE_DIRECTORY "${PROJECT_SOURCE_DIR}/build")
 
@@ -182,18 +183,18 @@ if("${CODAL_DEFINITIONS}" STRGREATER "")
     file(WRITE "${EXTRA_INCLUDES_NEW_PATH}" ${CODAL_DEFINITIONS})
     configure_file(${EXTRA_INCLUDES_NEW_PATH} ${EXTRA_INCLUDES_PATH} COPYONLY)
 
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -include \"${EXTRA_INCLUDES_PATH}\"")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -include \"${EXTRA_INCLUDES_PATH}\"")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -include ${EXTRA_INCLUDES_PATH}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -include ${EXTRA_INCLUDES_PATH}")
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I\"${PLATFORM_INCLUDES_PATH}\"")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I\"${PLATFORM_INCLUDES_PATH}\"")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I${PLATFORM_INCLUDES_PATH}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${PLATFORM_INCLUDES_PATH}")
 
 # a define for cmake if statements to detect if within the CODAL build environment
 set(CODAL_BUILD_SYSTEM TRUE)
 
 # a define specificying common utils used in codal
-set(CODAL_UTILS_LOCATION "${PROJECT_SOURCE_DIR}/utils/cmake/util.cmake")
+set(CODAL_UTILS_LOCATION "${PROJECT_SOURCE_DIR}/${CORE_PATH}/utils/cmake/util.cmake")
 
 # this variable is used in the linking step of the final binary.
 set(LIB_FOLDERS "")
@@ -202,7 +203,7 @@ set(LIB_FOLDERS "")
 MESSAGE (STATUS "Adding library path: (${PROJECT_SOURCE_DIR}/${LIB_DEST})")
 include_directories(${PROJECT_SOURCE_DIR}/${LIB_DEST})
 
-#add_subdirectory("${PROJECT_SOURCE_DIR}/${LIB_DEST}/${dep}")
+include_directories("${PROJECT_SOURCE_DIR}/${LIB_DEST}/codal-nimble/inc")
 
 # "import" and add any libraries from target.json to the build list
 if("${device.libraries}" STRGREATER "")
@@ -245,25 +246,21 @@ if("${codal.libraries}" STRGREATER "")
         list(APPEND CODAL_DEPS "${codal.libraries_${i}.name}")
     endforeach()
 endif()
-
 foreach(dep ${CODAL_DEPS})
     message("${BoldGreen}Using library: ${dep}${ColourReset}")
     add_subdirectory("${PROJECT_SOURCE_DIR}/${LIB_DEST}/${dep}")
 endforeach()
 
+#here already a source file
 #finally, find sources and includes of the application, and create a target.
 RECURSIVE_FIND_DIR(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/${CODAL_APP_SOURCE_DIR}" "*.h")
-RECURSIVE_FIND_DIR(HPP_DIRS "${PROJECT_SOURCE_DIR}/${CODAL_APP_SOURCE_DIR}" "*.hpp")
-list(APPEND INCLUDE_DIRS ${HPP_DIRS})
-
 # *.c?? only catches .cpp, not .c, so let's be precise
 RECURSIVE_FIND_FILE(SOURCE_FILES "${PROJECT_SOURCE_DIR}/${CODAL_APP_SOURCE_DIR}" "*.cpp")
+
 RECURSIVE_FIND_FILE(S_FILES "${PROJECT_SOURCE_DIR}/${CODAL_APP_SOURCE_DIR}" "*.s")
 RECURSIVE_FIND_FILE(C_FILES "${PROJECT_SOURCE_DIR}/${CODAL_APP_SOURCE_DIR}" "*.c")
-RECURSIVE_FIND_FILE(CC_FILES "${PROJECT_SOURCE_DIR}/${CODAL_APP_SOURCE_DIR}" "*.cc")
 list(APPEND SOURCE_FILES ${S_FILES})
 list(APPEND SOURCE_FILES ${C_FILES})
-list(APPEND SOURCE_FILES ${CC_FILES})
 
 if("${SOURCE_FILES}" STREQUAL "")
     message(FATAL_ERROR "${BoldRed}No user application to build, please add a main.cpp at: ${PROJECT_SOURCE_DIR}/${CODAL_APP_SOURCE_DIR}${ColourReset}")
@@ -272,12 +269,12 @@ endif()
 if ("${BUILD_TOOL}" STRGREATER "")
     string(COMPARE EQUAL "${BUILD_TOOL}" "YOTTA" YOTTA_BUILD)
     if (${YOTTA_BUILD})
-        include("${PROJECT_SOURCE_DIR}/utils/cmake/buildtools/yotta.cmake")
+        include("${PROJECT_SOURCE_DIR}/${CORE_PATH}/utils/cmake/buildtools/yotta.cmake")
     endif ()
 
     string(COMPARE EQUAL "${BUILD_TOOL}" "CODAL" CODAL_BUILD)
     if (${CODAL_BUILD})
-        include("${PROJECT_SOURCE_DIR}/utils/cmake/buildtools/codal.cmake")
+        include("${PROJECT_SOURCE_DIR}/${CORE_PATH}/utils/cmake/buildtools/codal.cmake")
     endif()
 endif()
 
