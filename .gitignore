@@ -1,5 +1,7 @@
 build
-libraries
+libraries/**
+!libraries/codal-nimble
+!libraries/codal-nimble/**
 .yotta.json
 yotta_modules
 yotta_targets
