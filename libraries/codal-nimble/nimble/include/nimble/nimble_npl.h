@@ -17,8 +17,6 @@
  * under the License.
  */
 
-// in mynewt-nimble/nimble/include/nimble/nimble_npl.h
-
 #ifndef _NIMBLE_NPL_H_
 #define _NIMBLE_NPL_H_
 
